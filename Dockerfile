@@ -1,9 +1,18 @@
 # Dockerfile
 
-FROM python:3.8
+FROM continuumio/miniconda:4.7.12
+COPY environment.yml .
+RUN conda env create -f environment.yml
 
-ADD herg_docker.py
+# Make RUN commands use the new environment:
+SHELL ["conda", "run", "-n", "my-rdkit-env", "/bin/bash", "-c"]
 
-RUN pip install numpy pandas pyjanitor pickle5
+# Activate the environment, and make sure it's activated:
+RUN echo "Making sure rdkit is installed:"
+RUN python -c "from rdkit import Chem"
 
-CMD ["python", "./herg_docker.py"]
+# The code to run when container is started:
+ADD herg_docker.py .
+ADD rf.pkl .
+ADD xgb.pkl .
+ENTRYPOINT ["conda", "run", "-n", "my-rdkit-env", "python", "herg_docker.py"]
